@@ -55,9 +55,9 @@ func RemoveDuplicates[T comparable](s []T) []T {
 	return s
 }
 
-// IsSubset 判断一个int类型的切片是不是另一个int类型切片的子集 s2是否包含s1
-func IsSubset(s1, s2 []int) bool {
-	set := make(map[int]bool)
+// IsSubset 判断一个类型的切片是不是另一个类型切片的子集 s2是否包含s1
+func IsSubset[E comparable](s1, s2 []E) bool {
+	set := make(map[E]bool)
 	for _, v := range s2 {
 		set[v] = true
 	}
