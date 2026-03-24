@@ -1,8 +1,6 @@
 package server
 
 import (
-	v1 "conduit/api/conduit/v1"
-	"conduit/internal/biz"
 	"conduit/internal/conf"
 	"conduit/internal/service"
 
@@ -12,7 +10,7 @@ import (
 )
 
 // NewHTTPServer new an HTTP server.
-func NewHTTPServer(c *conf.Server, logger log.Logger, conduit *biz.ConduitServer) *http.Server {
+func NewHTTPServer(c *conf.Server, logger log.Logger, conduit *service.ConduitServer) *http.Server {
 	var opts = []http.ServerOption{
 		http.Middleware(
 			recovery.Recovery(),
@@ -30,6 +28,6 @@ func NewHTTPServer(c *conf.Server, logger log.Logger, conduit *biz.ConduitServer
 	srv := http.NewServer(opts...)
 
 	// Proxy
-	srv.Handle("*", conduit)
+	srv.HandlePrefix("", conduit)
 	return srv
 }
