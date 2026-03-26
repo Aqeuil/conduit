@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-kratos/kratos/v2/log"
 	"github.com/gomodule/redigo/redis"
 	"github.com/google/uuid"
 	"github.com/spf13/cast"
@@ -19,7 +20,7 @@ const (
 
 type LoggingConn struct {
 	Pool   *redis.Pool
-	logger *XLogger
+	logger *log.Helper
 }
 
 type logAttr struct {
@@ -45,7 +46,7 @@ type Config struct {
 }
 
 // NewLoggingPool returns a logging wrapper around a connection.
-func NewLoggingPool(config *Config, logger *XLogger) (*LoggingConn, error) {
+func NewLoggingPool(config *Config, logger log.Logger) (*LoggingConn, error) {
 	redisPool := &redis.Pool{
 		MaxIdle:     config.MaxIdleConns,
 		IdleTimeout: config.IdleTimeout,
@@ -87,7 +88,7 @@ func NewLoggingPool(config *Config, logger *XLogger) (*LoggingConn, error) {
 
 	return &LoggingConn{
 		Pool:   redisPool,
-		logger: logger,
+		logger: log.NewHelper(log.With(logger, "x_module", "pkg/redis")),
 	}, nil
 }
 
@@ -122,7 +123,7 @@ func (c *LoggingConn) log(ctx context.Context, attr logAttr) {
 		x_params = strings.Join(strList, " ")
 	}
 
-	c.logger.Debugw(
+	c.logger.WithContext(ctx).Infow(
 		"x_action", x_action,
 		"x_param", x_params,
 		"x_response", x_response,
@@ -620,26 +621,26 @@ func (c *LoggingConn) PipelineHGetAll(ctx context.Context, keys []string, keyMap
 		args = append(args, key)
 		values, err := redis.Values(redis.ReceiveContext(conn, ctx))
 		if err != nil {
-			c.logger.Errorf("Redis PipelineHGetAll error %v", err)
+			c.logger.WithContext(ctx).Errorf("Redis PipelineHGetAll error %v", err)
 			continue
 		}
 
 		if len(values) == 0 {
-			c.logger.Infof("Redis PipelineHGetAll value empty, key: %v", key)
+			c.logger.WithContext(ctx).Infof("Redis PipelineHGetAll value empty, key: %v", key)
 			continue
 		}
 
 		if _, ok := keyMapContainer[key].(map[string]string); ok {
 			ret, errMap := redis.StringMap(values, err)
 			if errMap != nil {
-				c.logger.Errorf("PipelineHGetAll.StringMap failed, %s", err)
+				c.logger.WithContext(ctx).Errorf("PipelineHGetAll.StringMap failed, %s", err)
 				continue
 			}
 			containers[key] = ret
 		} else {
 			errStruct := redis.ScanStruct(values, keyMapContainer[key])
 			if errStruct != nil {
-				c.logger.Errorf("PipelineHGetAll.ScanStruct failed, %s", err)
+				c.logger.WithContext(ctx).Errorf("PipelineHGetAll.ScanStruct failed, %s", err)
 				continue
 			}
 			containers[key] = keyMapContainer[key]
@@ -779,7 +780,7 @@ func (c *LoggingConn) PipelineHGetField(ctx context.Context, keyList []string, f
 		args = append(args, key)
 		val, err := conn.Receive()
 		if err != nil {
-			c.logger.Errorf("Redis PipelineHGetAll error %v", err)
+			c.logger.WithContext(ctx).Errorf("Redis PipelineHGetAll error %v", err)
 			continue
 		}
 
@@ -822,12 +823,12 @@ func (c *LoggingConn) PipelineHGetAllMap(ctx context.Context, keys []string) (ma
 		args = append(args, key)
 		values, err := redis.Values(redis.ReceiveContext(conn, ctx))
 		if err != nil {
-			c.logger.Errorf("Redis PipelineHGetAllMap error %v", err)
+			c.logger.WithContext(ctx).Errorf("Redis PipelineHGetAllMap error %v", err)
 			continue
 		}
 
 		if len(values) == 0 {
-			c.logger.Infof("Redis PipelineHGetAllMap value empty, key: %v", key)
+			c.logger.WithContext(ctx).Infof("Redis PipelineHGetAllMap value empty, key: %v", key)
 			continue
 		}
 		stringMap, _ := redis.StringMap(values, err)
@@ -868,7 +869,7 @@ func (c *LoggingConn) PipelineBitCount(ctx context.Context, keyList []string) ma
 		args = append(args, key)
 		val, err := conn.Receive()
 		if err != nil {
-			c.logger.Errorf("Redis PipelineBitCount error %v", err)
+			c.logger.WithContext(ctx).Errorf("Redis PipelineBitCount error %v", err)
 			continue
 		}
 

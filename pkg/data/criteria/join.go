@@ -17,7 +17,7 @@ func (s joinCriteria) GetQuery() string {
 		queries = append(queries, spec.GetQuery())
 	}
 
-	return strings.Join(queries, fmt.Sprintf(" %s ", s.separator))
+	return fmt.Sprintf("(%s)", strings.Join(queries, fmt.Sprintf(" %s ", s.separator)))
 }
 
 func (s joinCriteria) GetValues() []any {

@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+package api.v1;
+
+import "google/api/annotations.proto";
+
+option go_package = "conduit/api/v1;v1";
+option java_multiple_files = true;
+option java_package = "api.v1";
+
+service Plugin {
+  // 获取所有可用插件
+  rpc FindPlugins (FindPluginsReq) returns (FindPluginsResp) {
+    option (google.api.http) = {
+      post: "/plugin/list",
+      body: "*"
+    };
+  }
+}
+
+message FindPluginsReq {
+}
+
+message PluginParamRule {
+  string type = 1;
+  string name = 2;
+  repeated PluginParamRule children = 3;
+}
+
+message PluginInfo {
+  string key = 1;
+  string desc = 2;
+  repeated PluginParamRule rule = 3;
+}
+
+message FindPluginsResp {
+  repeated PluginInfo pre_plugins = 1;
+  repeated PluginInfo post_plugins = 2;
+}
