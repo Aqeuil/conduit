@@ -24,7 +24,9 @@ import (
 func wireApp(confServer *conf.Server, data *conf.Data, logger log.Logger) (*kratos.App, func(), error) {
 	conduitServer := service.NewConduitServer(logger)
 	httpServer := server.NewHTTPServer(confServer, logger, conduitServer)
-	app := newApp(logger, httpServer)
+	pluginServer := service.NewPluginServer()
+	adminServer := server.NewAdminHTTPServer(confServer, logger, conduitServer, pluginServer)
+	app := newApp(logger, httpServer, adminServer)
 	return app, func() {
 	}, nil
 }

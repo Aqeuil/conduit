@@ -17,6 +17,7 @@ type PostFunc interface {
 	Key() FuncKey
 	Execute(req *http.Response, params map[string]any) error
 	Help() string
+	ParamRules() []ParamRule
 }
 
 type ParamType string

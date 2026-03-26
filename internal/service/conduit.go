@@ -1,6 +1,7 @@
 package service
 
 import (
+	"conduit/internal/biz"
 	"conduit/internal/biz/matcher"
 	"conduit/internal/biz/response"
 	"encoding/json"
@@ -49,4 +50,24 @@ func (c ConduitServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 	proxy.ServeHTTP(w, r)
+}
+
+func (c ConduitServer) Online(unit *biz.ServiceUnit, path ...string) error {
+	for _, p := range path {
+		err := c.matcher.Add(unit, p)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (c ConduitServer) Offline(unit *biz.ServiceUnit, path ...string) error {
+	for _, p := range path {
+		err := c.matcher.Add(nil, p)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

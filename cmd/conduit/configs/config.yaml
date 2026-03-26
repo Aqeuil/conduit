@@ -2,6 +2,9 @@ server:
     http:
         addr: 0.0.0.0:8000
         timeout: 1s
+    admin_http:
+        addr: 0.0.0.0:3000
+        timeout: 1s
 data:
     database:
         driver: mysql
