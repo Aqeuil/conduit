@@ -14,6 +14,7 @@ func (r Redirect) Key() plugins.FuncKey {
 
 func (r Redirect) Execute(req *http.Request, params map[string]any) error {
 	req.URL.Host = params["host"].(string)
+	req.Host = params["host"].(string)
 	return nil
 }
 

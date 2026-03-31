@@ -1,6 +1,6 @@
 package biz
 
 type WorkFlow struct {
-	FuncKey string
-	Params  map[string]interface{}
+	FuncKey string                 `json:"func_key"`
+	Params  map[string]interface{} `json:"params"`
 }
