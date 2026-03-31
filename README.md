@@ -33,6 +33,8 @@
   （集成 Prometheus + OpenTelemetry + Jaeger）
 - [ ] **资源版本 + Watch 断线重连机制**  
   （完善 `resource_version` 逻辑）
+- [ ] **读取前置插件的结果**
+  - context
 
 #### 🔹 **P3 **
 - [ ] **高级工作流特性**  

@@ -14,6 +14,9 @@
 # Dependency directories (remove the comment below to include it)
 vendor/
 
+# config
+cmd/conduit/configs/config.yaml
+
 # Compiled Object files, Static and Dynamic libs (Shared Objects)
 *.o
 *.a

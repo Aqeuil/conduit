@@ -1,9 +1,9 @@
 package service
 
 import (
-	"conduit/internal/biz"
 	"conduit/internal/biz/matcher"
 	"conduit/internal/biz/response"
+	"conduit/internal/data"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -19,10 +19,13 @@ type ConduitServer struct {
 	matcher matcher.RouterMatcher
 }
 
-func NewConduitServer(logger log.Logger) *ConduitServer {
+func NewConduitServer(
+	logger log.Logger,
+	watcher *data.UnitWatcher,
+) *ConduitServer {
 	return &ConduitServer{
 		log:     log.NewHelper(logger),
-		matcher: matcher.NewRadixMatcher(),
+		matcher: watcher.Matcher(),
 	}
 }
 
@@ -40,34 +43,18 @@ func (c ConduitServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	proxy := &httputil.ReverseProxy{
 		Director: func(req *http.Request) {
+			req.URL.Host = targetHost.Upstream
+			req.Host = targetHost.Upstream
+			req.URL.Scheme = "http"
+
 			err2 := targetHost.PreProgress(req)
 			if err2 != nil {
 				panic(err2)
 			}
 		},
 		ModifyResponse: func(res *http.Response) error {
-			return targetHost.PostProgress(res)
+			return targetHost.PostProgress(res.Request, res)
 		},
 	}
 	proxy.ServeHTTP(w, r)
-}
-
-func (c ConduitServer) Online(unit *biz.ServiceUnit, path ...string) error {
-	for _, p := range path {
-		err := c.matcher.Add(unit, p)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (c ConduitServer) Offline(unit *biz.ServiceUnit, path ...string) error {
-	for _, p := range path {
-		err := c.matcher.Add(nil, p)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
 }

@@ -8,5 +8,8 @@ import (
 type RouterMatcher interface {
 	Match(path string) (*biz.ServiceUnit, error)
 
-	Add(unit *biz.ServiceUnit, path ...string) error
+	Add(unit *biz.ServiceUnit) error
+	Update(unit *biz.ServiceUnit) error
+	Delete(unit *biz.ServiceUnit) error
+	Rebuild(units []*biz.ServiceUnit) error
 }

@@ -18,7 +18,7 @@ func (r Redirect) Execute(req *http.Request, params map[string]any) error {
 }
 
 func (r Redirect) Help() string {
-	return "重定向访问域名"
+	return "重定向访问域名, 优先级高于Upstream"
 }
 
 func (r Redirect) ParamRules() []plugins.ParamRule {
