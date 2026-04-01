@@ -36,6 +36,7 @@ bin/
 
 # Develop tools
 .vscode/
+.claude
 .idea/
 *.swp
 *.TTF

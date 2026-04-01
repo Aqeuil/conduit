@@ -7,6 +7,7 @@
 package main
 
 import (
+	"conduit/internal/biz/matcher"
 	"conduit/internal/conf"
 	"conduit/internal/data"
 	"conduit/internal/server"
@@ -25,11 +26,12 @@ import (
 // wireApp init kratos application.
 func wireApp(confServer *conf.Server, confData *conf.Data, etcd *conf.Etcd, logger log.Logger) (*kratos.App, func(), error) {
 	unitWatcher := data.NewUnitWatcher(etcd, logger)
-	conduitServer := service.NewConduitServer(logger, unitWatcher)
+	manager := matcher.NewManager(unitWatcher, logger)
+	conduitServer := service.NewConduitServer(logger, manager)
 	httpServer := server.NewHTTPServer(confServer, logger, conduitServer)
 	pluginServer := service.NewPluginServer()
 	adminServer := server.NewAdminHTTPServer(confServer, logger, conduitServer, pluginServer)
-	app := newApp(logger, httpServer, adminServer, unitWatcher)
+	app := newApp(logger, httpServer, adminServer, manager)
 	return app, func() {
 	}, nil
 }

@@ -1,8 +1,8 @@
 package main
 
 import (
+	"conduit/internal/biz/matcher"
 	"conduit/internal/conf"
-	"conduit/internal/data"
 	"conduit/internal/server"
 	"conduit/pkg/util"
 	"conduit/pkg/xlog"
@@ -44,7 +44,7 @@ func newApp(
 	logger log.Logger,
 	hs *server.HttpServer,
 	admin *server.AdminServer,
-	watcher *data.UnitWatcher,
+	m *matcher.Manager,
 ) *kratos.App {
 	return kratos.New(
 		kratos.ID(id),
@@ -55,7 +55,7 @@ func newApp(
 		kratos.Server(
 			(*http.Server)(hs),
 			(*http.Server)(admin),
-			watcher,
+			m,
 		),
 	)
 }
