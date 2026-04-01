@@ -20,6 +20,7 @@ message Etcd {
 message Server {
   HTTP http = 1;
   HTTP admin_http = 2;
+  HTTP inner_http = 3;
 }
 
 message HTTP {
@@ -30,10 +31,18 @@ message HTTP {
 
 
 message Data {
-
+    PgSql data = 1;
 }
 
-message Database {
+message Mysql {
+  string driver = 1;
+  string source = 2;
+  int32 max_idle_conns = 3;
+  int32 max_open_conns = 4;
+}
+
+
+message PgSql {
   string driver = 1;
   string source = 2;
   int32 max_idle_conns = 3;

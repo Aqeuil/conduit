@@ -1,7 +1,6 @@
 package main
 
 import (
-	"conduit/internal/biz/manager"
 	"conduit/internal/conf"
 	"conduit/internal/server"
 	"conduit/pkg/util"
@@ -42,9 +41,7 @@ func init() {
 
 func newApp(
 	logger log.Logger,
-	hs *server.HttpServer,
-	admin *server.ConduitServer,
-	m *manager.Manager,
+	hs *server.AdminServer,
 ) *kratos.App {
 	return kratos.New(
 		kratos.ID(id),
@@ -54,8 +51,6 @@ func newApp(
 		kratos.Logger(logger),
 		kratos.Server(
 			(*http.Server)(hs),
-			(*http.Server)(admin),
-			m,
 		),
 	)
 }
@@ -98,7 +93,7 @@ func main() {
 		xlog.XesLogCallerKey, xlog.Caller(3),
 		xlog.XesLogTraceIDKey, xlog.TraceID(),
 	)
-	app, cleanup, err := wireApp(bc.Server, bc.Etcd, logger)
+	app, cleanup, err := wireApp(bc.Server, bc.Data, bc.Etcd, logger)
 	if err != nil {
 		panic(err)
 	}

@@ -1,7 +1,7 @@
 package service
 
 import (
-	"conduit/internal/biz/matcher"
+	"conduit/internal/biz/manager"
 	"conduit/internal/biz/response"
 	"encoding/json"
 	"fmt"
@@ -15,10 +15,10 @@ import (
 type ConduitServer struct {
 	log *log.Helper
 
-	matcher *matcher.Manager
+	matcher *manager.Manager
 }
 
-func NewConduitServer(logger log.Logger, m *matcher.Manager) *ConduitServer {
+func NewConduitServer(logger log.Logger, m *manager.Manager) *ConduitServer {
 	return &ConduitServer{
 		log:     log.NewHelper(logger),
 		matcher: m,

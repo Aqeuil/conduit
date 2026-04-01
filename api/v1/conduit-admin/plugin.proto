@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package api.v1.conduit_admin;
+
+import "google/api/annotations.proto";
+import "api/v1/common/plugin.proto";
+
+option go_package = "conduit/api/v1/conduit_admin;conduit_admin";
+option java_multiple_files = true;
+option java_package = "api.v1.conduit_admin";
+
+service Plugin {
+  // 获取所有可用插件
+  rpc FindBasePlugins (FindPluginsReq) returns (FindPluginsResp) {
+    option (google.api.http) = {
+      post: "/plugin/base/list",
+      body: "*"
+    };
+  }
+}
+
+message FindPluginsReq {
+}
+
+message FindPluginsResp {
+  repeated api.v1.common.PluginInfo pre_plugins = 1;
+  repeated api.v1.common.PluginInfo post_plugins = 2;
+}

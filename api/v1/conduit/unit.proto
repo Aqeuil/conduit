@@ -1,12 +1,12 @@
 syntax = "proto3";
 
-package api.v1;
+package api.v1.conduit;
 
 import "google/api/annotations.proto";
 
-option go_package = "conduit/api/v1;v1";
+option go_package = "conduit/api/v1/conduit;conduit";
 option java_multiple_files = true;
-option java_package = "api.v1";
+option java_package = "api.v1.conduit";
 
 service ServerUnit {
 

@@ -35,17 +35,43 @@ config:
 
 .PHONY: api
 # generate api proto
-api:
-	protoc --proto_path=./api \
+
+common-api:
+	protoc --proto_path=. \
+		   --proto_path=./third_party \
+		   --go_out=paths=source_relative:. \
+		   ./api/v1/common/*.proto
+
+conduit-api: common-api
+	protoc --proto_path=. \
+		   --proto_path=./third_party \
+		   --go_out=paths=source_relative:. \
+		   --go-http_out=paths=source_relative:. \
+		   --go-grpc_out=paths=source_relative:. \
+		   --openapi_out=fq_schema_naming=true,default_response=false:. \
+		   ./api/v1/conduit/*.proto
+	find ./api -name '*.pb.go' -exec perl -pi -e 's/,omitempty//g' {} +
+
+
+conduit-admin-api: common-api
+	protoc --proto_path=. \
 	       --proto_path=./third_party \
- 	       --go_out=paths=source_relative:./api \
- 	       --go-http_out=paths=source_relative:./api \
- 	       --go-grpc_out=paths=source_relative:./api \
+ 	       --go_out=paths=source_relative:. \
+ 	       --go-http_out=paths=source_relative:. \
+ 	       --go-grpc_out=paths=source_relative:. \
 	       --openapi_out=fq_schema_naming=true,default_response=false:. \
-	       $(API_PROTO_FILES)
+	       ./api/v1/conduit-admin/*.proto
+	find ./api -name '*.pb.go' -exec perl -pi -e 's/,omitempty//g' {} +
+
+
+api:
+	make conduit-api
+	make conduit-admin-api
+
 
 wire:
 	cd ./cmd/conduit && wire
+	cd ./cmd/conduit-admin && wire
 
 .PHONY: build
 # build

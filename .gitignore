@@ -16,6 +16,9 @@ vendor/
 
 # config
 cmd/conduit/configs/config.yaml
+cmd/conduit-admin/configs/config.yaml
+web/.idea
+web/node_modules
 
 # Compiled Object files, Static and Dynamic libs (Shared Objects)
 *.o

@@ -1,8 +1,8 @@
 package data
 
 import (
-	"conduit/internal/biz"
 	"conduit/internal/biz/matcher"
+	"conduit/internal/biz/unit"
 	"conduit/internal/conf"
 	"context"
 	"encoding/json"
@@ -77,7 +77,7 @@ func (w *UnitWatcher) list(ctx context.Context, ch chan<- matcher.Event) error {
 		return fmt.Errorf("etcd list %s: %w", w.prefix, err)
 	}
 
-	units := make([]*biz.ServiceUnit, 0, len(resp.Kvs))
+	units := make([]*unit.ServiceApplication, 0, len(resp.Kvs))
 	for _, kv := range resp.Kvs {
 		unit, err2 := decodeUnit(kv.Value, kv.ModRevision)
 		if err2 != nil {
@@ -136,29 +136,29 @@ func (w *UnitWatcher) watch(ctx context.Context, ch chan<- matcher.Event) error 
 func (w *UnitWatcher) toEvent(ev *clientv3.Event) (matcher.Event, error) {
 	switch ev.Type {
 	case clientv3.EventTypePut:
-		unit, err := decodeUnit(ev.Kv.Value, ev.Kv.ModRevision)
+		u, err := decodeUnit(ev.Kv.Value, ev.Kv.ModRevision)
 		if err != nil {
 			return matcher.Event{}, err
 		}
 		if ev.IsCreate() {
-			return matcher.Event{Type: matcher.EventAdd, Units: []*biz.ServiceUnit{unit}, ResourceVersion: ev.Kv.ModRevision}, nil
+			return matcher.Event{Type: matcher.EventAdd, Units: []*unit.ServiceApplication{u}, ResourceVersion: ev.Kv.ModRevision}, nil
 		}
-		return matcher.Event{Type: matcher.EventUpdate, Units: []*biz.ServiceUnit{unit}, ResourceVersion: ev.Kv.ModRevision}, nil
+		return matcher.Event{Type: matcher.EventUpdate, Units: []*unit.ServiceApplication{u}, ResourceVersion: ev.Kv.ModRevision}, nil
 
 	case clientv3.EventTypeDelete:
-		unit, err := decodeUnit(ev.PrevKv.Value, ev.Kv.ModRevision)
+		u, err := decodeUnit(ev.PrevKv.Value, ev.Kv.ModRevision)
 		if err != nil {
 			return matcher.Event{}, err
 		}
-		return matcher.Event{Type: matcher.EventDelete, Units: []*biz.ServiceUnit{unit}, ResourceVersion: ev.Kv.ModRevision}, nil
+		return matcher.Event{Type: matcher.EventDelete, Units: []*unit.ServiceApplication{u}, ResourceVersion: ev.Kv.ModRevision}, nil
 
 	default:
 		return matcher.Event{}, fmt.Errorf("unknown event type %v", ev.Type)
 	}
 }
 
-func decodeUnit(val []byte, rv int64) (*biz.ServiceUnit, error) {
-	var unit biz.ServiceUnit
+func decodeUnit(val []byte, rv int64) (*unit.ServiceApplication, error) {
+	var unit unit.ServiceApplication
 	if err := json.Unmarshal(val, &unit); err != nil {
 		return nil, err
 	}

@@ -1,4 +1,4 @@
-package biz
+package unit
 
 type WorkFlow struct {
 	FuncKey string                 `json:"func_key"`

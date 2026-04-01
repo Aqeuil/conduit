@@ -7,8 +7,8 @@
 package main
 
 import (
+	"conduit/cmd/conduit-admin/conf"
 	"conduit/internal/biz/manager"
-	"conduit/internal/conf"
 	"conduit/internal/data"
 	"conduit/internal/server"
 	"conduit/internal/service"
@@ -27,14 +27,13 @@ import (
 // Injectors from wire.go:
 
 // wireApp init kratos application.
-func wireApp(confServer *conf.Server, etcd *conf.Etcd, logger log.Logger) (*kratos.App, func(), error) {
+func wireApp(confServer *conf.Server, confData *conf.Data, etcd *conf.Etcd, logger log.Logger) (*kratos.App, func(), error) {
 	unitWatcher := data.NewUnitWatcher(etcd, logger)
 	managerManager := manager.NewManager(unitWatcher, logger)
 	conduitServer := service.NewConduitServer(logger, managerManager)
-	httpServer := server.NewHTTPServer(confServer, logger, conduitServer)
-	pluginServer := plugin.NewPluginServer()
-	serverConduitServer := server.NewConduitHTTPServer(confServer, logger, conduitServer, pluginServer)
-	app := newApp(logger, httpServer, serverConduitServer, managerManager)
+	pluginAdminServer := plugin.NewPluginAdminServer()
+	adminServer := server.NewAdminHTTPServer(confServer, logger, conduitServer, pluginAdminServer)
+	app := newApp(logger, adminServer)
 	return app, func() {
 	}, nil
 }

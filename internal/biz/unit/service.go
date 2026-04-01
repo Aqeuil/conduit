@@ -1,4 +1,4 @@
-package biz
+package unit
 
 import (
 	"conduit/internal/plugins"
@@ -6,8 +6,8 @@ import (
 	"net/http"
 )
 
-// ServiceUnit 服务单元, 最小的Deployment单位
-type ServiceUnit struct {
+// ServiceApplication 服务单元, 最小的Deployment单位
+type ServiceApplication struct {
 	// Id DeploymentId
 	Id string `json:"id,omitempty"`
 
@@ -23,7 +23,7 @@ type ServiceUnit struct {
 	ResourceVersion int64 `json:"resource_version,omitempty"`
 }
 
-func (s ServiceUnit) PreProgress(req *http.Request) error {
+func (s ServiceApplication) PreProgress(req *http.Request) error {
 	for _, w := range s.PreWork {
 		key := w.FuncKey
 		preFunc, ok := plugins.PrePlugins[plugins.FuncKey(key)]
@@ -39,7 +39,7 @@ func (s ServiceUnit) PreProgress(req *http.Request) error {
 	return nil
 }
 
-func (s ServiceUnit) PostProgress(req *http.Request, resp *http.Response) error {
+func (s ServiceApplication) PostProgress(req *http.Request, resp *http.Response) error {
 	for _, w := range s.PostWork {
 		key := w.FuncKey
 		postFunc, ok := plugins.PostPlugins[plugins.FuncKey(key)]

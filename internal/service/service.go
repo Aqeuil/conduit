@@ -1,9 +1,14 @@
 package service
 
-import "github.com/google/wire"
+import (
+	"conduit/internal/service/plugin"
+
+	"github.com/google/wire"
+)
 
 // ProviderSet is service providers.
 var ProviderSet = wire.NewSet(
 	NewConduitServer,
-	NewPluginServer,
+	plugin.NewPluginServer,
+	plugin.NewPluginAdminServer,
 )

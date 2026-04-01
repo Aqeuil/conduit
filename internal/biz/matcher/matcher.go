@@ -1,13 +1,13 @@
 package matcher
 
 import (
-	"conduit/internal/biz"
+	"conduit/internal/biz/unit"
 	"context"
 )
 
 // RouterMatcher 只负责路由匹配，不感知数据来源。
 type RouterMatcher interface {
-	Match(path string) (*biz.ServiceUnit, error)
+	Match(path string) (*unit.ServiceApplication, error)
 }
 
 // EventType 变更类型
@@ -24,7 +24,7 @@ const (
 // Event watcher 推送给 manager 的变更事件
 type Event struct {
 	Type            EventType
-	Units           []*biz.ServiceUnit // Rebuild
+	Units           []*unit.ServiceApplication // Rebuild
 	ResourceVersion int64
 }
 

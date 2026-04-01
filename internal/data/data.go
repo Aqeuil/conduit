@@ -1,6 +1,7 @@
 package data
 
 import (
+	"conduit/internal/biz/matcher"
 	"conduit/internal/conf"
 
 	"github.com/go-kratos/kratos/v2/log"
@@ -8,7 +9,12 @@ import (
 )
 
 // ProviderSet is data providers.
-var ProviderSet = wire.NewSet(NewData, NewEtcdClient, NewUnitWatcher)
+var ProviderSet = wire.NewSet(
+	NewData,
+	NewEtcdClient,
+	NewUnitWatcher,
+	wire.Bind(new(matcher.Watcher), new(*UnitWatcher)),
+)
 
 // Data .
 type Data struct {
