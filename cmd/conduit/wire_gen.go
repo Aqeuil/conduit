@@ -7,7 +7,9 @@
 package main
 
 import (
+	"conduit/internal/biz/matcher"
 	"conduit/internal/conf"
+	"conduit/internal/data"
 	"conduit/internal/server"
 	"conduit/internal/service"
 	"github.com/go-kratos/kratos/v2"
@@ -15,18 +17,21 @@ import (
 )
 
 import (
+	_ "conduit/internal/plugins/register"
 	_ "go.uber.org/automaxprocs"
 )
 
 // Injectors from wire.go:
 
 // wireApp init kratos application.
-func wireApp(confServer *conf.Server, data *conf.Data, logger log.Logger) (*kratos.App, func(), error) {
-	conduitServer := service.NewConduitServer(logger)
+func wireApp(confServer *conf.Server, confData *conf.Data, etcd *conf.Etcd, logger log.Logger) (*kratos.App, func(), error) {
+	unitWatcher := data.NewUnitWatcher(etcd, logger)
+	manager := matcher.NewManager(unitWatcher, logger)
+	conduitServer := service.NewConduitServer(logger, manager)
 	httpServer := server.NewHTTPServer(confServer, logger, conduitServer)
 	pluginServer := service.NewPluginServer()
 	adminServer := server.NewAdminHTTPServer(confServer, logger, conduitServer, pluginServer)
-	app := newApp(logger, httpServer, adminServer)
+	app := newApp(logger, httpServer, adminServer, manager)
 	return app, func() {
 	}, nil
 }

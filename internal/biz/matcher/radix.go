@@ -6,34 +6,26 @@ import (
 	"errors"
 )
 
-type RadixMatcher struct {
-	matcher *util.SafeRadixTree[util.StringKey, biz.ServiceUnit]
+// matcherSnapshot 不可变快照，构建一次后只读。
+type matcherSnapshot struct {
+	tree  *util.RadixTree[util.StringKey, string]
+	units map[string]*biz.ServiceUnit
 }
 
-func NewRadixMatcher() *RadixMatcher {
-	return &RadixMatcher{
-		matcher: util.NewSafeRadixTree[util.StringKey, biz.ServiceUnit](),
+func buildSnapshot(units map[string]*biz.ServiceUnit) *matcherSnapshot {
+	tree := util.NewRadixTree[util.StringKey, string]()
+	for _, u := range units {
+		for _, path := range u.Routers {
+			tree.Save(util.StringKey(path), u.Id)
+		}
 	}
+	return &matcherSnapshot{tree: tree, units: units}
 }
 
-func (r RadixMatcher) Match(path string) (*biz.ServiceUnit, error) {
-	v, ok := r.matcher.Find(util.StringKey(path))
+func (s *matcherSnapshot) match(path string) (*biz.ServiceUnit, error) {
+	v, ok := s.tree.Find(util.StringKey(path))
 	if !ok {
 		return nil, errors.New("not found")
 	}
-	return v, nil
-}
-
-func (r RadixMatcher) Add(unit *biz.ServiceUnit, paths ...string) error {
-	for _, path := range paths {
-		_, ok := r.matcher.Find(util.StringKey(path))
-		if ok {
-			return errors.New("path exists")
-		}
-	}
-
-	for _, path := range paths {
-		r.matcher.Save(util.StringKey(path), *unit)
-	}
-	return nil
+	return s.units[*v], nil
 }
