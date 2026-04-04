@@ -1,0 +1,66 @@
+syntax = "proto3";
+
+package api.v1.conduit_admin;
+
+import "google/api/annotations.proto";
+
+option go_package = "conduit/api/v1/conduit-admin;conduit_admin";
+
+service ApplicationAdmin {
+  rpc CreateApplication (CreateApplicationReq) returns (ApplicationInfo) {
+    option (google.api.http) = { post: "/application/create", body: "*" };
+  }
+  rpc UpdateApplication (UpdateApplicationReq) returns (ApplicationInfo) {
+    option (google.api.http) = { post: "/application/update", body: "*" };
+  }
+  rpc DeleteApplication (DeleteApplicationReq) returns (DeleteApplicationResp) {
+    option (google.api.http) = { post: "/application/delete", body: "*" };
+  }
+  rpc GetApplication (GetApplicationReq) returns (ApplicationInfo) {
+    option (google.api.http) = { post: "/application/get", body: "*" };
+  }
+  rpc ListApplications (ListApplicationsReq) returns (ListApplicationsResp) {
+    option (google.api.http) = { post: "/application/list", body: "*" };
+  }
+}
+
+message ApplicationInfo {
+  string id          = 1;
+  string name        = 2;
+  string upstream    = 3;
+  string description = 4;
+  string created_at  = 5;
+  string updated_at  = 6;
+}
+
+message CreateApplicationReq {
+  string name        = 1;
+  string upstream    = 2;
+  string description = 3;
+}
+
+message UpdateApplicationReq {
+  string id          = 1;
+  string name        = 2;
+  string upstream    = 3;
+  string description = 4;
+}
+
+message DeleteApplicationReq {
+  string id = 1;
+}
+message DeleteApplicationResp {}
+
+message GetApplicationReq {
+  string id = 1;
+}
+
+message ListApplicationsReq {
+  int32 page      = 1;
+  int32 page_size = 2;
+}
+
+message ListApplicationsResp {
+  repeated ApplicationInfo items = 1;
+  int64                    total = 2;
+}

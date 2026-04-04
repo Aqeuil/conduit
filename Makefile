@@ -48,7 +48,7 @@ conduit-api: common-api
 		   --go_out=paths=source_relative:. \
 		   --go-http_out=paths=source_relative:. \
 		   --go-grpc_out=paths=source_relative:. \
-		   --openapi_out=fq_schema_naming=true,default_response=false:. \
+		   --openapi_out=fq_schema_naming=true,default_response=false:./docs/conduit \
 		   ./api/v1/conduit/*.proto
 	find ./api -name '*.pb.go' -exec perl -pi -e 's/,omitempty//g' {} +
 
@@ -59,12 +59,16 @@ conduit-admin-api: common-api
  	       --go_out=paths=source_relative:. \
  	       --go-http_out=paths=source_relative:. \
  	       --go-grpc_out=paths=source_relative:. \
-	       --openapi_out=fq_schema_naming=true,default_response=false:. \
+	       --openapi_out=fq_schema_naming=true,default_response=false:./docs/conduit-admin \
 	       ./api/v1/conduit-admin/*.proto
 	find ./api -name '*.pb.go' -exec perl -pi -e 's/,omitempty//g' {} +
 
 
 api:
+	mkdir -p ./docs
+	mkdir -p ./docs/conduit
+	mkdir -p ./docs/conduit-admin
+
 	make conduit-api
 	make conduit-admin-api
 

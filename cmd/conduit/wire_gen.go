@@ -13,14 +13,12 @@ import (
 	"conduit/internal/server"
 	"conduit/internal/service"
 	"conduit/internal/service/plugin"
-
 	"github.com/go-kratos/kratos/v2"
 	"github.com/go-kratos/kratos/v2/log"
 )
 
 import (
 	_ "conduit/internal/plugins/register"
-
 	_ "go.uber.org/automaxprocs"
 )
 
@@ -33,7 +31,7 @@ func wireApp(confServer *conf.Server, etcd *conf.Etcd, logger log.Logger) (*krat
 	conduitServer := service.NewConduitServer(logger, managerManager)
 	httpServer := server.NewHTTPServer(confServer, logger, conduitServer)
 	pluginServer := plugin.NewPluginServer()
-	serverConduitServer := server.NewConduitHTTPServer(confServer, logger, conduitServer, pluginServer)
+	serverConduitServer := server.NewConduitHTTPServer(confServer, logger, pluginServer)
 	app := newApp(logger, httpServer, serverConduitServer, managerManager)
 	return app, func() {
 	}, nil

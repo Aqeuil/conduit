@@ -6,9 +6,9 @@
 package main
 
 import (
-	"conduit/internal/biz"
 	"conduit/internal/conf"
 	"conduit/internal/data"
+	"conduit/internal/model"
 	"conduit/internal/server"
 	"conduit/internal/service"
 
@@ -20,10 +20,11 @@ import (
 // wireApp init kratos application.
 func wireApp(*conf.Server, *conf.Data, *conf.Etcd, log.Logger) (*kratos.App, func(), error) {
 	panic(wire.Build(
-		biz.ProviderSet,
+		//biz.ProviderSet,
 		server.ProviderSet,
 		data.ProviderSet,
 		service.ProviderSet,
+		model.ProviderSet,
 		newApp,
 	))
 }

@@ -47,6 +47,8 @@ message PgSql {
   string source = 2;
   int32 max_idle_conns = 3;
   int32 max_open_conns = 4;
+  google.protobuf.Duration conn_max_lifetime = 5;
+  google.protobuf.Duration conn_max_idle_time = 6;
 }
 
 message Log {

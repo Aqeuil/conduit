@@ -1,0 +1,61 @@
+syntax = "proto3";
+
+package api.v1.conduit_admin;
+
+import "google/api/annotations.proto";
+
+option go_package = "conduit/api/v1/conduit-admin;conduit_admin";
+
+service WorkflowAdmin {
+  rpc CreateWorkflow (CreateWorkflowReq) returns (WorkflowInfo) {
+    option (google.api.http) = { post: "/workflow/create", body: "*" };
+  }
+  rpc UpdateWorkflow (UpdateWorkflowReq) returns (WorkflowInfo) {
+    option (google.api.http) = { post: "/workflow/update", body: "*" };
+  }
+  rpc DeleteWorkflow (DeleteWorkflowReq) returns (DeleteWorkflowResp) {
+    option (google.api.http) = { post: "/workflow/delete", body: "*" };
+  }
+  rpc ListWorkflows (ListWorkflowsReq) returns (ListWorkflowsResp) {
+    option (google.api.http) = { post: "/workflow/list", body: "*" };
+  }
+}
+
+message WorkflowInfo {
+  int32  id            = 1;
+  string app_id        = 2;
+  string workflow_type = 3;
+  string func_key      = 4;
+  string params        = 5;  // JSON object
+  int32  sort_order    = 6;
+  string created_at    = 7;
+  string updated_at    = 8;
+}
+
+message CreateWorkflowReq {
+  string app_id        = 1;
+  string workflow_type = 2;
+  string func_key      = 3;
+  string params        = 4;
+  int32  sort_order    = 5;
+}
+
+message UpdateWorkflowReq {
+  int32  id            = 1;
+  string workflow_type = 2;
+  string func_key      = 3;
+  string params        = 4;
+  int32  sort_order    = 5;
+}
+
+message DeleteWorkflowReq  { int32 id = 1; }
+message DeleteWorkflowResp {}
+
+message ListWorkflowsReq {
+  string app_id        = 1;
+  string workflow_type = 2;  // 可选，过滤 pre_work / post_work
+}
+
+message ListWorkflowsResp {
+  repeated WorkflowInfo items = 1;
+}

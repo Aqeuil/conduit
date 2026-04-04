@@ -17,6 +17,8 @@ vendor/
 # config
 cmd/conduit/configs/config.yaml
 cmd/conduit-admin/configs/config.yaml
+web/.env**
+web/dist
 web/.idea
 web/node_modules
 

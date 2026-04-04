@@ -1,71 +1,78 @@
 package model
 
 import (
-	"encoding/json"
+	"conduit/internal/data"
+	"context"
 	"time"
+
+	"github.com/go-pg/pg/v10"
+	"github.com/google/uuid"
 )
 
-// Application K8s应用表
+// Application 应用表
 type Application struct {
-	ID          string    `gorm:"column:id;primaryKey;type:varchar(64)" json:"id"`            // 主键ID
-	Name        string    `gorm:"column:name;not null;type:varchar(255)" json:"name"`         // 应用名称
-	Upstream    string    `gorm:"column:upstream;not null;type:varchar(200)" json:"upstream"` // 上游地址
-	Description string    `gorm:"column:description;type:text" json:"description"`            // 描述
-	CreatedAt   time.Time `gorm:"column:created_at;not null;default:now()" json:"created_at"` // 创建时间
-	UpdatedAt   time.Time `gorm:"column:updated_at;not null;default:now()" json:"updated_at"` // 更新时间
+	tableName   struct{}  `pg:"applications"`
+	ID          string    `pg:"id,pk" json:"id"`
+	Name        string    `pg:"name,notnull" json:"name"`
+	Upstream    string    `pg:"upstream,notnull" json:"upstream"`
+	Description string    `pg:"description" json:"description"`
+	CreatedAt   time.Time `pg:"created_at,notnull" json:"created_at"`
+	UpdatedAt   time.Time `pg:"updated_at,notnull" json:"updated_at"`
 }
 
-// TableName 指定表名
-func (Application) TableName() string {
-	return "applications"
+type ApplicationRepo struct {
+	data *data.Data
 }
 
-// Directory 目录表
-type Directory struct {
-	ID        int       `gorm:"column:id;primaryKey;autoIncrement" json:"id"`                // 自增主键
-	AppID     string    `gorm:"column:app_id;not null;type:varchar(64);index" json:"app_id"` // 所属应用ID，外键 references applications
-	ParentID  int       `gorm:"column:parent_id;not null;default:0;index" json:"parent_id"`  // 父目录ID，外键 references directories
-	Name      string    `gorm:"column:name;not null;type:varchar(255)" json:"name"`          // 目录名称
-	SortOrder int       `gorm:"column:sort_order;not null;default:1" json:"sort_order"`      // 排序序号
-	CreatedAt time.Time `gorm:"column:created_at;not null;default:now()" json:"created_at"`  // 创建时间
-	UpdatedAt time.Time `gorm:"column:updated_at;not null;default:now()" json:"updated_at"`  // 更新时间
+func NewApplicationRepo(data *data.Data) *ApplicationRepo {
+	return &ApplicationRepo{data: data}
 }
 
-func (Directory) TableName() string {
-	return "directories"
+func (r *ApplicationRepo) Create(ctx context.Context, app *Application) error {
+	app.ID = uuid.New().String()
+	now := time.Now()
+	app.CreatedAt = now
+	app.UpdatedAt = now
+	_, err := r.data.Data.ModelContext(ctx, app).Insert()
+	return err
 }
 
-// Router 路由表
-type Router struct {
-	ID             int             `gorm:"column:id;primaryKey;autoIncrement" json:"id"`                          // 自增主键
-	AppID          string          `gorm:"column:app_id;not null;type:varchar(64);index" json:"app_id"`           // 所属应用ID
-	DirectoryID    int             `gorm:"column:directory_id;not null;default:0;index" json:"directory_id"`      // 所属目录ID
-	Path           string          `gorm:"column:path;not null;type:varchar(255)" json:"path"`                    // 路由路径
-	Method         string          `gorm:"column:method;not null;default:'GET';type:varchar(10)" json:"method"`   // HTTP方法
-	Headers        json.RawMessage `gorm:"column:headers;type:jsonb;default:'[]'" json:"headers"`                 // 请求头限制（JSON数组）
-	RequestSchema  json.RawMessage `gorm:"column:request_schema;type:jsonb;default:'{}'" json:"request_schema"`   // 请求体JSON Schema
-	ResponseSchema json.RawMessage `gorm:"column:response_schema;type:jsonb;default:'{}'" json:"response_schema"` // 响应体JSON Schema
-	CreatedAt      time.Time       `gorm:"column:created_at;not null;default:now()" json:"created_at"`            // 创建时间
-	UpdatedAt      time.Time       `gorm:"column:updated_at;not null;default:now()" json:"updated_at"`            // 更新时间
-	Descript       string          `gorm:"column:descript;type:text;default:''" json:"descript"`                  // 描述
+func (r *ApplicationRepo) Update(ctx context.Context, app *Application) error {
+	app.UpdatedAt = time.Now()
+	_, err := r.data.Data.ModelContext(ctx, app).
+		Column("name", "upstream", "description", "updated_at").
+		WherePK().
+		Update()
+	return err
 }
 
-func (Router) TableName() string {
-	return "routers"
+func (r *ApplicationRepo) Delete(ctx context.Context, id string) error {
+	_, err := r.data.Data.ModelContext(ctx, &Application{ID: id}).WherePK().Delete()
+	return err
 }
 
-// Workflow 工作流表
-type Workflow struct {
-	ID           int             `gorm:"column:id;primaryKey;autoIncrement" json:"id"`                                           // 自增主键
-	AppID        string          `gorm:"column:app_id;not null;type:varchar(64);index:idx_workflows_app_type" json:"app_id"`     // 所属应用ID
-	WorkflowType string          `gorm:"column:workflow_type;not null;default:'pre_work';type:varchar(20)" json:"workflow_type"` // 工作流类型：pre_work / post_work
-	FuncKey      string          `gorm:"column:func_key;not null;default:'';type:varchar(255)" json:"func_key"`                  // 函数标识
-	Params       json.RawMessage `gorm:"column:params;type:jsonb;default:'{}'" json:"params"`                                    // 参数（JSON对象）
-	SortOrder    int             `gorm:"column:sort_order;not null;default:1" json:"sort_order"`                                 // 排序序号
-	CreatedAt    time.Time       `gorm:"column:created_at;not null;default:now()" json:"created_at"`                             // 创建时间
-	UpdatedAt    time.Time       `gorm:"column:updated_at;not null;default:now()" json:"updated_at"`                             // 更新时间
+func (r *ApplicationRepo) Get(ctx context.Context, id string) (*Application, error) {
+	app := &Application{ID: id}
+	err := r.data.Data.ModelContext(ctx, app).WherePK().Select()
+	if err == pg.ErrNoRows {
+		return nil, nil
+	}
+	return app, err
 }
 
-func (Workflow) TableName() string {
-	return "workflows"
+func (r *ApplicationRepo) List(ctx context.Context, page, pageSize int) ([]*Application, int64, error) {
+	if page <= 0 {
+		page = 1
+	}
+	if pageSize <= 0 {
+		pageSize = 20
+	}
+
+	var apps []*Application
+	total, err := r.data.Data.ModelContext(ctx, &apps).
+		OrderExpr("created_at DESC").
+		Limit(pageSize).
+		Offset((page - 1) * pageSize).
+		SelectAndCount()
+	return apps, int64(total), err
 }

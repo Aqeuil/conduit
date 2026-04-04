@@ -7,20 +7,20 @@
 package main
 
 import (
-	"conduit/cmd/conduit-admin/conf"
-	"conduit/internal/biz/manager"
+	"conduit/internal/conf"
 	"conduit/internal/data"
+	"conduit/internal/model"
 	"conduit/internal/server"
-	"conduit/internal/service"
+	"conduit/internal/service/application"
 	"conduit/internal/service/plugin"
-
+	"conduit/internal/service/router"
+	"conduit/internal/service/workflow"
 	"github.com/go-kratos/kratos/v2"
 	"github.com/go-kratos/kratos/v2/log"
 )
 
 import (
 	_ "conduit/internal/plugins/register"
-
 	_ "go.uber.org/automaxprocs"
 )
 
@@ -28,12 +28,20 @@ import (
 
 // wireApp init kratos application.
 func wireApp(confServer *conf.Server, confData *conf.Data, etcd *conf.Etcd, logger log.Logger) (*kratos.App, func(), error) {
-	unitWatcher := data.NewUnitWatcher(etcd, logger)
-	managerManager := manager.NewManager(unitWatcher, logger)
-	conduitServer := service.NewConduitServer(logger, managerManager)
-	pluginAdminServer := plugin.NewPluginAdminServer()
-	adminServer := server.NewAdminHTTPServer(confServer, logger, conduitServer, pluginAdminServer)
+	dataData, cleanup, err := data.NewData(confData, logger)
+	if err != nil {
+		return nil, nil, err
+	}
+	pluginAdminServer := plugin.NewPluginAdminServer(dataData)
+	applicationRepo := model.NewApplicationRepo(dataData)
+	applicationAdminServer := application.NewApplicationAdminServer(applicationRepo)
+	routerRepo := model.NewRouterRepo(dataData)
+	routerAdminServer := router.NewRouterAdminServer(routerRepo)
+	workflowRepo := model.NewWorkflowRepo(dataData)
+	workflowAdminServer := workflow.NewWorkflowAdminServer(workflowRepo)
+	adminServer := server.NewAdminHTTPServer(confServer, logger, pluginAdminServer, applicationAdminServer, routerAdminServer, workflowAdminServer)
 	app := newApp(logger, adminServer)
 	return app, func() {
+		cleanup()
 	}, nil
 }

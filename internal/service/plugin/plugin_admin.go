@@ -3,16 +3,21 @@ package plugin
 import (
 	"conduit/api/v1/common"
 	admin "conduit/api/v1/conduit-admin"
+	"conduit/internal/data"
 	"conduit/internal/plugins"
 	"context"
 )
 
 type PluginAdminServer struct {
 	admin.UnimplementedPluginServer
+
+	data *data.Data
 }
 
-func NewPluginAdminServer() *PluginAdminServer {
-	return &PluginAdminServer{}
+func NewPluginAdminServer(data *data.Data) *PluginAdminServer {
+	return &PluginAdminServer{
+		data: data,
+	}
 }
 
 func (p PluginAdminServer) FindBasePlugins(context.Context, *admin.FindPluginsReq) (*admin.FindPluginsResp, error) {
