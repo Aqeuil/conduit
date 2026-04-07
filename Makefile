@@ -44,12 +44,12 @@ common-api:
 
 conduit-api: common-api
 	protoc --proto_path=. \
-		   --proto_path=./third_party \
-		   --go_out=paths=source_relative:. \
-		   --go-http_out=paths=source_relative:. \
-		   --go-grpc_out=paths=source_relative:. \
-		   --openapi_out=fq_schema_naming=true,default_response=false:./docs/conduit \
-		   ./api/v1/conduit/*.proto
+           --proto_path=./third_party \
+           --go_out=paths=source_relative:. \
+           --go-http_out=paths=source_relative:. \
+           --go-grpc_out=paths=source_relative:. \
+           --openapiv2_out=allow_merge=true,merge_file_name=conduit:./docs/conduit \
+           ./api/v1/conduit/*.proto
 	find ./api -name '*.pb.go' -exec perl -pi -e 's/,omitempty//g' {} +
 
 
@@ -59,7 +59,7 @@ conduit-admin-api: common-api
  	       --go_out=paths=source_relative:. \
  	       --go-http_out=paths=source_relative:. \
  	       --go-grpc_out=paths=source_relative:. \
-	       --openapi_out=fq_schema_naming=true,default_response=false:./docs/conduit-admin \
+	       --openapiv2_out=allow_merge=true,merge_file_name=conduit-admin:./docs/conduit-admin \
 	       ./api/v1/conduit-admin/*.proto
 	find ./api -name '*.pb.go' -exec perl -pi -e 's/,omitempty//g' {} +
 
