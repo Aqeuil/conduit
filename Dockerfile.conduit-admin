@@ -1,0 +1,15 @@
+FROM golang:1.23-alpine AS builder
+RUN apk add --no-cache make git
+WORKDIR /app
+COPY server/go.mod server/go.sum ./
+RUN go mod download
+COPY server/ .
+RUN go build -ldflags "-s -w" -o bin/conduit-admin ./cmd/conduit-admin/...
+
+FROM alpine:latest
+RUN apk add --no-cache ca-certificates tzdata && ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+WORKDIR /app
+COPY --from=builder /app/bin/conduit-admin .
+COPY server/cmd/conduit-admin/configs ./configs
+EXPOSE 8080
+CMD ["./conduit-admin", "-conf", "configs/config.yaml"]

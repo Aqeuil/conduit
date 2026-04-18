@@ -1,0 +1,31 @@
+# --- 编译阶段 ---
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+RUN npm install
+
+COPY . .
+
+# 构建前端，注意 VITE_API_BASE 设置为 /admin
+# 这样 admin-web 请求时会自动拼接 www.mochixxx.cc/admin
+RUN VITE_API_BASE=/admin npm run build
+
+# --- 运行阶段 ---
+FROM nginx:alpine
+
+# 复制构建产物到 Nginx 目录
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+# 覆盖默认配置以支持 SPA 路由
+RUN echo 'server { \
+    listen 80; \
+    location / { \
+        root /usr/share/nginx/html; \
+        index index.html index.htm; \
+        try_files $uri $uri/ /index.html; \
+    } \
+}' > /etc/nginx/conf.d/default.conf
+
+EXPOSE 80
