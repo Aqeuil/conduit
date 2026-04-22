@@ -41,8 +41,8 @@ spec:
   selector:
     app: conduit-admin
   ports:
-    - port: 3000
-      targetPort: 3000
+    - port: 8080
+      targetPort: 8080
       nodePort: 30080
 ---
 apiVersion: apps/v1
@@ -65,7 +65,7 @@ spec:
         command: ["./conduit-admin"]
         args: ["-conf", "configs/conduit-admin/config.yaml"]
         ports:
-        - containerPort: 3000
+        - containerPort: 8080
 
 ---
 apiVersion: v1
@@ -113,13 +113,6 @@ spec:
   - host: www.mochixxx.cc
     http:
       paths:
-      - path: /admin(/|$)(.*)
-        pathType: ImplementationSpecific
-        backend:
-          service:
-            name: conduit-admin
-            port:
-              number: 3000
       - path: /()(.*)
         pathType: ImplementationSpecific
         backend:
