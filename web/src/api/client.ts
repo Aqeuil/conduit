@@ -1,6 +1,12 @@
 import { API_BASE } from '@/config/env'
 import { message } from 'antd'
 
+interface ApiResponse<T> {
+  code: number
+  data: T
+  message: string
+}
+
 export async function post<T>(path: string, body: unknown = {}): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
     method: 'POST',
@@ -14,5 +20,12 @@ export async function post<T>(path: string, body: unknown = {}): Promise<T> {
     throw new Error(text)
   }
 
-  return res.json() as Promise<T>
+  const json: ApiResponse<T> = await res.json()
+
+  if (json.code !== 200) {
+    message.error(json.message)
+    throw new Error(json.message)
+  }
+
+  return json.data
 }

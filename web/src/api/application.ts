@@ -21,4 +21,7 @@ export const applicationApi = {
 
   list: (page = 1, page_size = 20) =>
     post<ListApplicationsResp>('/application/list', { page, page_size }),
+
+  sync: (id: string) =>
+    post<Record<string, never>>('/application/sync', { id }),
 }

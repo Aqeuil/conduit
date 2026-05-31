@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Breadcrumb, Tabs, Typography, message } from 'antd'
+import { Breadcrumb, Button, Tabs, Typography, message } from 'antd'
 import { useNavigate, useParams } from 'react-router-dom'
 import { applicationApi } from '@/api/application'
 import RouterTree from '@/components/router/RouterTree'
@@ -13,6 +13,7 @@ export default function AppDetail() {
   const { openTab } = useTabs()
   const [app, setApp] = useState<ApplicationInfo | null>(null)
   const [selectedKey, setSelectedKey] = useState<string | null>(null)
+  const [syncing, setSyncing] = useState(false)
 
   useEffect(() => {
     if (!appId) return
@@ -26,6 +27,16 @@ export default function AppDetail() {
   }, [appId, navigate, openTab])
 
   if (!appId) return null
+
+  async function handleSync() {
+    setSyncing(true)
+    try {
+      await applicationApi.sync(appId)
+      message.success('同步成功')
+    } finally {
+      setSyncing(false)
+    }
+  }
 
   function handleNodeSelect(node: RouterNode) {
     setSelectedKey(`${node.type}-${node.id}`)
@@ -44,9 +55,12 @@ export default function AppDetail() {
         ]}
       />
 
-      <Typography.Title level={4} style={{ marginBottom: 4 }}>
-        {app?.name}
-      </Typography.Title>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+        <Typography.Title level={4} style={{ margin: 0 }}>
+          {app?.name}
+        </Typography.Title>
+        <Button loading={syncing} onClick={handleSync}>同步 etcd</Button>
+      </div>
       {app?.upstream && (
         <Typography.Text type="secondary" style={{ display: 'block', marginBottom: 16 }}>
           上游: {app.upstream}

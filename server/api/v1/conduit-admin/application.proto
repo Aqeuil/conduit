@@ -22,6 +22,9 @@ service ApplicationAdmin {
   rpc ListApplications (ListApplicationsReq) returns (ListApplicationsResp) {
     option (google.api.http) = { post: "/application/list", body: "*" };
   }
+  rpc SyncApplication (SyncApplicationReq) returns (SyncApplicationResp) {
+    option (google.api.http) = { post: "/application/sync", body: "*" };
+  }
 }
 
 message ApplicationInfo {
@@ -64,3 +67,9 @@ message ListApplicationsResp {
   repeated ApplicationInfo items = 1;
   int64                    total = 2;
 }
+
+message SyncApplicationReq {
+  string id = 1;
+}
+
+message SyncApplicationResp {}

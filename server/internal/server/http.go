@@ -9,7 +9,11 @@ import (
 	"conduit/internal/service/plugin"
 	"conduit/internal/service/router"
 	"conduit/internal/service/workflow"
+	"time"
 
+	httpNet "net/http"
+
+	"github.com/go-kratos/kratos/v2/errors"
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/middleware/recovery"
 	http "github.com/go-kratos/kratos/v2/transport/http"
@@ -71,5 +75,57 @@ func serverOpts(c *conf.HTTP) []http.ServerOption {
 	if c.Timeout != nil {
 		opts = append(opts, http.Timeout(c.Timeout.AsDuration()))
 	}
+	// 包装返回
+	opts = append(opts, http.ErrorEncoder(ErrorEncoder))
+	opts = append(opts, http.ResponseEncoder(ResponseEncoder))
 	return opts
+}
+
+type Response struct {
+	Code    int         `json:"code" form:"code" protobuf:"varint,1,opt,name=code"`
+	Message string      `json:"message" form:"message" protobuf:"bytes,2,opt,name=message"`
+	Ts      string      `json:"time" form:"time" protobuf:"bytes,3,opt,name=time"`
+	Reason  string      `json:"reason" form:"reason" protobuf:"bytes,4,opt,name=reason"`
+	Data    interface{} `json:"data" form:"data" protobuf:"bytes,5,opt,name=data"`
+}
+
+func ErrorEncoder(w httpNet.ResponseWriter, r *httpNet.Request, err error) {
+	se := errors.FromError(err)
+	reply := &Response{
+		Code:    int(se.Code),
+		Message: se.Message,
+		Reason:  se.Reason,
+		Data:    nil,
+		Ts:      time.Now().Format("2006-01-02 15:04:05"),
+	}
+
+	codec, _ := http.CodecForRequest(r, "Accept")
+	body, err := codec.Marshal(reply)
+	if err != nil {
+		w.WriteHeader(httpNet.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(httpNet.StatusOK)
+	w.Write(body)
+}
+
+func ResponseEncoder(w httpNet.ResponseWriter, r *httpNet.Request, v interface{}) error {
+	reply := &Response{
+		Code:    200,
+		Message: "success",
+		Reason:  "success",
+		Data:    v,
+		Ts:      time.Now().Format("2006-01-02 15:04:05"),
+	}
+
+	codec, _ := http.CodecForRequest(r, "Accept")
+	data, err := codec.Marshal(reply)
+	if err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(httpNet.StatusOK)
+	w.Write(data)
+	return nil
 }

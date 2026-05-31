@@ -34,14 +34,20 @@ func wireApp(confServer *conf.Server, confData *conf.Data, etcd *conf.Etcd, logg
 	}
 	pluginAdminServer := plugin.NewPluginAdminServer(dataData)
 	applicationRepo := model.NewApplicationRepo(dataData)
-	applicationAdminServer := application.NewApplicationAdminServer(applicationRepo)
 	routerRepo := model.NewRouterRepo(dataData)
-	routerAdminServer := router.NewRouterAdminServer(routerRepo)
+	client, cleanup2, err := data.NewEtcdClient(etcd)
+	if err != nil {
+		cleanup()
+		return nil, nil, err
+	}
+	applicationAdminServer := application.NewApplicationAdminServer(applicationRepo, routerRepo, client, etcd)
+	routerAdminServer := router.NewRouterAdminServer(routerRepo, applicationRepo, client, etcd)
 	workflowRepo := model.NewWorkflowRepo(dataData)
 	workflowAdminServer := workflow.NewWorkflowAdminServer(workflowRepo)
 	adminServer := server.NewAdminHTTPServer(confServer, logger, pluginAdminServer, applicationAdminServer, routerAdminServer, workflowAdminServer)
 	app := newApp(logger, adminServer)
 	return app, func() {
+		cleanup2()
 		cleanup()
 	}, nil
 }

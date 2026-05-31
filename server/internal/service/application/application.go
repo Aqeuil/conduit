@@ -2,18 +2,31 @@ package application
 
 import (
 	admin "conduit/api/v1/conduit-admin"
+	"conduit/internal/biz/unit"
+	"conduit/internal/conf"
 	"conduit/internal/model"
 	"context"
+	"encoding/json"
 	"time"
+
+	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 type ApplicationAdminServer struct {
 	admin.UnimplementedApplicationAdminServer
-	repo *model.ApplicationRepo
+	repo        *model.ApplicationRepo
+	routerRepo  *model.RouterRepo
+	etcdClient  *clientv3.Client
+	watchPrefix string
 }
 
-func NewApplicationAdminServer(repo *model.ApplicationRepo) *ApplicationAdminServer {
-	return &ApplicationAdminServer{repo: repo}
+func NewApplicationAdminServer(repo *model.ApplicationRepo, routerRepo *model.RouterRepo, etcdClient *clientv3.Client, etcdCfg *conf.Etcd) *ApplicationAdminServer {
+	return &ApplicationAdminServer{
+		repo:        repo,
+		routerRepo:  routerRepo,
+		etcdClient:  etcdClient,
+		watchPrefix: etcdCfg.WatchPrefix,
+	}
 }
 
 func (s *ApplicationAdminServer) CreateApplication(ctx context.Context, req *admin.CreateApplicationReq) (*admin.ApplicationInfo, error) {
@@ -66,6 +79,38 @@ func (s *ApplicationAdminServer) ListApplications(ctx context.Context, req *admi
 		resp.Items = append(resp.Items, toInfo(app))
 	}
 	return resp, nil
+}
+
+func (s *ApplicationAdminServer) SyncApplication(ctx context.Context, req *admin.SyncApplicationReq) (*admin.SyncApplicationResp, error) {
+	app, err := s.repo.Get(ctx, req.Id)
+	if err != nil {
+		return nil, err
+	}
+	routers, err := s.routerRepo.ListAll(ctx, req.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	paths := make([]string, 0, len(routers))
+	for _, r := range routers {
+		if r.Type == model.RouterTypeRouter && r.Path != "" {
+			paths = append(paths, r.Path)
+		}
+	}
+
+	sa := unit.ServiceApplication{
+		Id:       app.ID,
+		Upstream: app.Upstream,
+		Routers:  paths,
+	}
+	val, err := json.Marshal(sa)
+	if err != nil {
+		return nil, err
+	}
+	if _, err = s.etcdClient.Put(ctx, s.watchPrefix+"/"+app.ID, string(val)); err != nil {
+		return nil, err
+	}
+	return &admin.SyncApplicationResp{}, nil
 }
 
 func toInfo(app *model.Application) *admin.ApplicationInfo {

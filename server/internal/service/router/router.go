@@ -2,18 +2,29 @@ package router
 
 import (
 	admin "conduit/api/v1/conduit-admin"
+	"conduit/internal/conf"
 	"conduit/internal/model"
 	"context"
 	"time"
+
+	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 type RouterAdminServer struct {
 	admin.UnimplementedRouterAdminServer
-	repo *model.RouterRepo
+	repo        *model.RouterRepo
+	appRepo     *model.ApplicationRepo
+	etcdClient  *clientv3.Client
+	watchPrefix string
 }
 
-func NewRouterAdminServer(repo *model.RouterRepo) *RouterAdminServer {
-	return &RouterAdminServer{repo: repo}
+func NewRouterAdminServer(repo *model.RouterRepo, appRepo *model.ApplicationRepo, etcdClient *clientv3.Client, etcdCfg *conf.Etcd) *RouterAdminServer {
+	return &RouterAdminServer{
+		repo:        repo,
+		appRepo:     appRepo,
+		etcdClient:  etcdClient,
+		watchPrefix: etcdCfg.WatchPrefix,
+	}
 }
 
 func (s *RouterAdminServer) CreateRouter(ctx context.Context, req *admin.CreateRouterReq) (*admin.RouterNode, error) {
@@ -31,6 +42,9 @@ func (s *RouterAdminServer) CreateRouter(ctx context.Context, req *admin.CreateR
 		Description:    req.Description,
 	}
 	if err := s.repo.Create(ctx, rt); err != nil {
+		return nil, err
+	}
+	if err := s.syncToEtcd(ctx, req.AppId); err != nil {
 		return nil, err
 	}
 	return nodeToProto(rt), nil
@@ -52,7 +66,26 @@ func (s *RouterAdminServer) UpdateRouter(ctx context.Context, req *admin.UpdateR
 	if err := s.repo.Update(ctx, rt); err != nil {
 		return nil, err
 	}
+	existing, err := s.repo.Get(ctx, int(req.Id))
+	if err != nil {
+		return nil, err
+	}
+	if err := s.syncToEtcd(ctx, existing.AppID); err != nil {
+		return nil, err
+	}
 	return nodeToProto(rt), nil
+}
+
+func (s *RouterAdminServer) syncToEtcd(ctx context.Context, appID string) error {
+	app, err := s.appRepo.Get(ctx, appID)
+	if err != nil {
+		return err
+	}
+	all, err := s.repo.ListAll(ctx, appID)
+	if err != nil {
+		return err
+	}
+	return syncAppToEtcd(ctx, s.etcdClient, s.watchPrefix, app, all)
 }
 
 func (s *RouterAdminServer) DeleteRouter(ctx context.Context, req *admin.DeleteRouterReq) (*admin.DeleteRouterResp, error) {
