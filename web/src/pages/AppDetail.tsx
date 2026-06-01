@@ -31,7 +31,7 @@ export default function AppDetail() {
   async function handleSync() {
     setSyncing(true)
     try {
-      await applicationApi.sync(appId)
+      await applicationApi.sync(appId ?? '')
       message.success('同步成功')
     } finally {
       setSyncing(false)
